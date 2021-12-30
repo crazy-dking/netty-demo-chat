@@ -6,11 +6,9 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.List;
 
 @Slf4j
@@ -48,6 +46,10 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        getMagic(in, out, log);
+    }
+
+    static void getMagic(ByteBuf in, List<Object> out, Logger log) throws IOException, ClassNotFoundException {
         int magicNum = in.readInt();
         byte version = in.readByte();
         byte serializerType = in.readByte();

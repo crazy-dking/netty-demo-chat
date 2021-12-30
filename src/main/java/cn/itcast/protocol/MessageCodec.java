@@ -13,8 +13,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+/**
+ * ByteToMessageCodec 是不可以共享的。
+ */
 @Slf4j
-@ChannelHandler.Sharable
 public class MessageCodec extends ByteToMessageCodec<Message> {
 
     @Override
@@ -44,19 +46,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        int magicNum = in.readInt();
-        byte version = in.readByte();
-        byte serializerType = in.readByte();
-        byte messageType = in.readByte();
-        int sequenceId = in.readInt();
-        in.readByte();
-        int length = in.readInt();
-        byte[] bytes = new byte[length];
-        in.readBytes(bytes, 0, length);
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-        Message message = (Message) ois.readObject();
-        log.debug("{}, {}, {}, {}, {}, {}", magicNum, version, serializerType, messageType, sequenceId, length);
-        log.debug("{}", message);
-        out.add(message);
+        MessageCodecSharable.getMagic(in, out, log);
     }
 }
