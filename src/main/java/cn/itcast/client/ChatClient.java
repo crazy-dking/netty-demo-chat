@@ -4,15 +4,15 @@ import cn.itcast.message.*;
 import cn.itcast.protocol.MessageCodecSharable;
 import cn.itcast.protocol.ProtocolFrameDecoder;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -41,6 +41,22 @@ public class ChatClient {
                     ch.pipeline().addLast(new ProtocolFrameDecoder());
                     ch.pipeline().addLast(LOGGING_HANDLER);
                     ch.pipeline().addLast(MESSAGE_CODEC);
+                    // 检测写空闲，如果3秒内咩有向服务器写，我们就手动写一个过去
+                    ch.pipeline().addLast(new IdleStateHandler(0,3,0));
+                    // ChannelDuplexHandler 双向的
+                    ch.pipeline().addLast(new ChannelDuplexHandler(){
+                        // 触发自定义事件
+                        @Override
+                        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                            IdleStateEvent evt1 = (IdleStateEvent) evt;
+                            // 如果我们监听到的状态是
+                            if(evt1.state()== IdleState.WRITER_IDLE){
+                                log.info("3秒，自动心跳");
+                                ctx.channel().writeAndFlush(new PingMessage());
+                            }
+
+                        }
+                    });
                     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
                         @Override
                         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
