@@ -18,6 +18,8 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 @Slf4j
 public class ChatServer {
     public static void main(String[] args) {
@@ -84,5 +86,4 @@ public class ChatServer {
             worker.shutdownGracefully();
         }
     }
-
 }
